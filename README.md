@@ -1,2 +1,14 @@
-# Phishing-Website-Detection-System
-Developed a scalable phishing detection system using Machine Learning (TF-IDF + classification model) to identify malicious URLs. Built as a Flask-based REST API and deployed on cloud infrastructure for real-time predictions and security enhancement
+# Phishing Detection Web App (AWS Deployed)
+
+## Tech Stack:
+- Python (Flask)
+- Machine Learning
+- AWS EC2
+- AWS Load Balancer
+- AWS Auto Scaling Group
+
+## Architecture:
+User → Load Balancer → EC2 Instance → Flask App
+
+## Cloud Deployment:
+Deployed on Amazon Web Services using EC2 and ALB with Auto Scaling enabled.
