@@ -4,52 +4,35 @@ import os
 
 app = Flask(__name__)
 
-# =========================
-# LOAD MODEL
-# =========================
-MODEL_PATH = "phishing.pkl"
-
+# Load model
 model = None
-
 try:
-    if os.path.exists(MODEL_PATH):
-        model = pickle.load(open(MODEL_PATH, "rb"))
+    if os.path.exists("phishing.pkl"):
+        model = pickle.load(open("phishing.pkl", "rb"))
         print("✅ ML model loaded")
     else:
-        print("❌ Model file not found")
+        print("❌ Model not found")
 except Exception as e:
-    print("❌ Model load error:", e)
-    model = None
+    print("❌ Error loading model:", e)
 
 
-# =========================
-# CLASSIFIER
-# =========================
+# Classifier
 def classify_url(url):
     url = url.strip().lower()
 
-    # ML prediction
     if model:
         try:
-            X = [url]
-            pred = model.predict(X)[0]
+            pred = model.predict([url])[0]
             return "Phishing" if pred == 1 else "Safe"
         except:
             pass
 
-    # Fallback rules
-    phishing_keywords = [
-        "login", "verify", "secure", "bank",
-        "account", "update", "password",
-        "signin", "paypal", "apple", "facebook"
-    ]
-
-    return "Phishing" if any(word in url for word in phishing_keywords) else "Safe"
+    # fallback
+    keywords = ["login", "verify", "bank", "secure", "account"]
+    return "Phishing" if any(k in url for k in keywords) else "Safe"
 
 
-# =========================
-# ROUTE
-# =========================
+# Route
 @app.route("/", methods=["GET", "POST"])
 def index():
     results = []
@@ -57,7 +40,7 @@ def index():
     phishing = 0
 
     if request.method == "POST":
-        urls = request.form.get("urls", "").strip().split("\n")
+        urls = request.form.get("urls", "").split("\n")
         urls = [u.strip() for u in urls if u.strip()]
 
         for url in urls:
@@ -90,9 +73,7 @@ def index():
     return render_template("index.html", results=None, summary=None)
 
 
-# =========================
-# RUN
-# =========================
+# Run
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 10000))
     app.run(host="0.0.0.0", port=port)
