@@ -1,9 +1,12 @@
 from flask import Flask, render_template, request
 import pickle
-import numpy as np
 import os
 
 app = Flask(__name__)
+
+# =========================
+# LOAD MODEL
+# =========================
 MODEL_PATH = "phishing.pkl"
 
 model = None
@@ -18,43 +21,43 @@ except Exception as e:
     print("❌ Model load error:", e)
     model = None
 
-# =========================
-# FEATURE FUNCTION
-# =========================
-def extract_features(url):
-    url = url.lower()
 
-    return [
-        len(url),
-        url.count("."),
-        url.count("-"),
-        url.count("@"),
-        int("https" in url),
-        int(any(word in url for word in [
-            "login", "verify", "secure", "bank",
-            "account", "update", "password",
-            "paypal", "free", "gift"
-        ])),
+# =========================
+# CLASSIFIER
+# =========================
+def classify_url(url):
+    url = url.strip().lower()
+
+    # ML prediction
+    if model:
+        try:
+            X = [url]
+            pred = model.predict(X)[0]
+            return "Phishing" if pred == 1 else "Safe"
+        except:
+            pass
+
+    # Fallback rules
+    phishing_keywords = [
+        "login", "verify", "secure", "bank",
+        "account", "update", "password",
+        "signin", "paypal", "apple", "facebook"
     ]
 
-
-def classify_url(url):
-    features = np.array(extract_features(url)).reshape(1, -1)
-
-    if model:
-        pred = model.predict(features)[0]
-        return "Phishing" if pred == 1 else "Safe"
-
-    return "Safe"
+    return "Phishing" if any(word in url for word in phishing_keywords) else "Safe"
 
 
+# =========================
+# ROUTE
+# =========================
 @app.route("/", methods=["GET", "POST"])
 def index():
     results = []
-    safe = phishing = 0
+    safe = 0
+    phishing = 0
 
     if request.method == "POST":
-        urls = request.form.get("urls", "").split("\n")
+        urls = request.form.get("urls", "").strip().split("\n")
         urls = [u.strip() for u in urls if u.strip()]
 
         for url in urls:
@@ -85,7 +88,11 @@ def index():
         return render_template("index.html", results=results, summary=summary)
 
     return render_template("index.html", results=None, summary=None)
-    
-    if __name__ == "__main__":
+
+
+# =========================
+# RUN
+# =========================
+if __name__ == "__main__":
     port = int(os.environ.get("PORT", 10000))
     app.run(host="0.0.0.0", port=port)
