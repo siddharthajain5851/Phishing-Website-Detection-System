@@ -1,32 +1,68 @@
-import sys
-sys.stdout.reconfigure(encoding='utf-8')
 import pandas as pd
 import pickle
 import re
-from sklearn.feature_extraction.text import TfidfVectorizer
-from sklearn.linear_model import LogisticRegression
+import numpy as np
 
-# Load dataset
+from sklearn.model_selection import train_test_split
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.metrics import accuracy_score
+
+# =========================
+# LOAD DATA
+# =========================
 df = pd.read_csv("dataset.csv")
 
-# Clean URLs
-def clean_url(url):
-    return re.sub(r"^https?://(www\.)?", "", url)
+# =========================
+# FEATURE ENGINEERING
+# =========================
+def extract_features(url):
+    url = url.lower()
 
-df["url"] = df["url"].apply(clean_url)
+    return [
+        len(url),                         # URL length
+        url.count("."),                  # number of dots
+        url.count("-"),                  # hyphens
+        url.count("@"),                  # @ symbols
+        int("https" in url),             # https present
+        int(any(word in url for word in [
+            "login", "verify", "secure", "bank",
+            "account", "update", "password",
+            "paypal", "free", "gift"
+        ])),                              # phishing keywords
+    ]
 
-# Vectorization
-vectorizer = TfidfVectorizer()
-X = vectorizer.fit_transform(df["url"])
+# =========================
+# BUILD FEATURES
+# =========================
+X = np.array([extract_features(u) for u in df["url"]])
 y = df["label"]
 
-# Train model
-model = LogisticRegression()
-model.fit(X, y)
+# =========================
+# TRAIN TEST SPLIT
+# =========================
+X_train, X_test, y_train, y_test = train_test_split(
+    X, y, test_size=0.2, random_state=42
+)
 
-# Save model and vectorizer
-pickle.dump(vectorizer, open("vectorizer.pkl", "wb"))
+# =========================
+# MODEL (STRONGER)
+# =========================
+model = RandomForestClassifier(
+    n_estimators=200,
+    random_state=42
+)
+
+model.fit(X_train, y_train)
+
+# =========================
+# EVALUATION
+# =========================
+pred = model.predict(X_test)
+print("✅ Accuracy:", accuracy_score(y_test, pred))
+
+# =========================
+# SAVE MODEL
+# =========================
 pickle.dump(model, open("phishing.pkl", "wb"))
 
-print("\u2705 Model training complete")
-print("vectorizer.pkl and phishing.pkl saved")
+print("✅ Model saved successfully")
