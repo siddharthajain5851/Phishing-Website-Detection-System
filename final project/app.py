@@ -85,6 +85,7 @@ def index():
         return render_template("index.html", results=results, summary=summary)
 
     return render_template("index.html", results=None, summary=None)
+    
     if __name__ == "__main__":
     port = int(os.environ.get("PORT", 10000))
     app.run(host="0.0.0.0", port=port)
