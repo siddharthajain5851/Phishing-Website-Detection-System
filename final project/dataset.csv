@@ -1,12 +1,18 @@
-url,label
-google.com,good
-facebook.com,good
-amazon.in,good
-microsoft.com,good
-github.com,good
-secure-login-paypal.com,bad
-free-money-now.net,bad
-verify-bank-account.co,bad
-update-your-paytm.in,bad
-login-alert-icici.com,bad
+ url,label
+google.com,0
+facebook.com,0
+amazon.in,0
+microsoft.com,0
+github.com,0
+openai.com,0
+wikipedia.org,0
+instagram.com,0
+secure-login-paypal.com,1
+free-money-now.net,1
+verify-bank-account.co,1
+update-your-paytm.in,1
+login-alert-icici.com,1
+bank-security-update.in,1
+account-verify-warning.com,1
+paypal-security-check.net,1
 
