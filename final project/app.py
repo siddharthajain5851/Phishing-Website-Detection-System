@@ -4,8 +4,7 @@ import numpy as np
 import os
 
 app = Flask(__name__)
-
- MODEL_PATH = "phishing.pkl"
+MODEL_PATH = "phishing.pkl"
 
 model = None
 
