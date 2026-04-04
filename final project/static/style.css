@@ -1,32 +1,120 @@
 body {
-    background-color: #f4f6f8;
-    font-family: Arial;
-}
-
-.container {
-    width: 400px;
-    margin: 100px auto;
-    background: white;
-    padding: 25px;
-    border-radius: 10px;
-    text-align: center;
-}
-
-input {
-    width: 90%;
-    padding: 10px;
-    margin-bottom: 15px;
-}
-
-button {
-    padding: 10px 20px;
-    background: #007bff;
-    border: none;
+    margin: 0;
+    font-family: Arial, sans-serif;
+    background: #0b1220;
     color: white;
-    cursor: pointer;
 }
 
-.result {
-    margin-top: 15px;
+/* Heading */
+h1 {
+    text-align: center;
+    color: #00e5ff;
+    text-shadow: 0 0 10px #00e5ff;
+    margin-top: 20px;
+}
+
+/* Container */
+.container {
+    width: 90%;
+    max-width: 1100px;
+    margin: auto;
+    padding: 20px;
+}
+
+/* Textarea */
+textarea {
+    width: 100%;
+    height: 140px;
+    padding: 12px;
+    border-radius: 10px;
+    border: 1px solid #00e5ff;
+    background: #111b2e;
+    color: white;
+    outline: none;
+}
+
+/* Button */
+button {
+    margin-top: 10px;
+    padding: 12px 22px;
+    background: #00e5ff;
+    border: none;
+    border-radius: 8px;
     font-weight: bold;
+    cursor: pointer;
+    transition: 0.3s;
+}
+
+button:hover {
+    background: #00bcd4;
+    transform: scale(1.05);
+}
+
+/* Cards */
+.cards {
+    display: flex;
+    gap: 15px;
+    margin-top: 25px;
+}
+
+.card {
+    flex: 1;
+    padding: 18px;
+    border-radius: 12px;
+    text-align: center;
+    font-weight: bold;
+    font-size: 16px;
+    transition: 0.3s;
+}
+
+.card:hover {
+    transform: translateY(-5px);
+}
+
+.safe {
+    background: linear-gradient(135deg, #00c853, #64dd17);
+    box-shadow: 0 0 15px #00c853;
+}
+
+.phishing {
+    background: linear-gradient(135deg, #d50000, #ff1744);
+    box-shadow: 0 0 15px #ff1744;
+}
+
+.risk {
+    background: linear-gradient(135deg, #ff9100, #ff6d00);
+    box-shadow: 0 0 15px #ff9100;
+}
+
+/* Table */
+table {
+    width: 100%;
+    margin-top: 25px;
+    border-collapse: collapse;
+    background: #111b2e;
+    border-radius: 10px;
+    overflow: hidden;
+}
+
+th {
+    background: #00e5ff;
+    color: black;
+    padding: 12px;
+    text-align: left;
+}
+
+td {
+    padding: 12px;
+    border-bottom: 1px solid #222;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .cards {
+        flex-direction: column;
+    }
+
+    button {
+        width: 100%;
+    }
 }
