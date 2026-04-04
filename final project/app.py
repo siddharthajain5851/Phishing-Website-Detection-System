@@ -5,16 +5,19 @@ import os
 
 app = Flask(__name__)
 
-MODEL_PATH = "phishing.pkl"
+ MODEL_PATH = "phishing.pkl"
 
 model = None
 
-if os.path.exists(MODEL_PATH):
-    model = pickle.load(open(MODEL_PATH, "rb"))
-    print("✅ ML model loaded")
-else:
-    print("⚠️ Model not found")
-
+try:
+    if os.path.exists(MODEL_PATH):
+        model = pickle.load(open(MODEL_PATH, "rb"))
+        print("✅ ML model loaded")
+    else:
+        print("❌ Model file not found")
+except Exception as e:
+    print("❌ Model load error:", e)
+    model = None
 
 # =========================
 # FEATURE FUNCTION
