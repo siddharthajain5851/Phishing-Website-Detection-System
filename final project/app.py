@@ -4,7 +4,9 @@ import os
 
 app = Flask(__name__)
 
-# Load model
+# =========================
+# LOAD MODEL
+# =========================
 model = None
 try:
     if os.path.exists("phishing.pkl"):
@@ -16,10 +18,34 @@ except Exception as e:
     print("❌ Error loading model:", e)
 
 
-# Classifier
+# =========================
+# CLASSIFIER (SMART VERSION)
+# =========================
 def classify_url(url):
     url = url.strip().lower()
 
+    # ❌ 1. INVALID URL CHECK
+    if "." not in url or len(url) < 5:
+        return "Phishing"
+
+    # ❌ 2. DOMAIN EXTENSION CHECK
+    valid_ext = [".com", ".in", ".org", ".net", ".co", ".gov", ".edu"]
+
+    if not any(url.endswith(ext) for ext in valid_ext):
+        return "Phishing"
+
+    # 🚨 3. SUSPICIOUS PATTERN CHECK
+    suspicious_words = [
+        "login", "verify", "secure", "bank",
+        "account", "update", "password",
+        "signin", "paypal", "apple", "facebook",
+        "free", "money", "offer", "urgent"
+    ]
+
+    if any(word in url for word in suspicious_words):
+        return "Phishing"
+
+    # 🤖 4. ML MODEL CHECK
     if model:
         try:
             pred = model.predict([url])[0]
@@ -27,12 +53,13 @@ def classify_url(url):
         except:
             pass
 
-    # fallback
-    keywords = ["login", "verify", "bank", "secure", "account"]
-    return "Phishing" if any(k in url for k in keywords) else "Safe"
+    # ✅ DEFAULT SAFE
+    return "Safe"
 
 
-# Route
+# =========================
+# ROUTE
+# =========================
 @app.route("/", methods=["GET", "POST"])
 def index():
     results = []
@@ -73,7 +100,9 @@ def index():
     return render_template("index.html", results=None, summary=None)
 
 
-# Run
+# =========================
+# RUN
+# =========================
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 10000))
     app.run(host="0.0.0.0", port=port)
