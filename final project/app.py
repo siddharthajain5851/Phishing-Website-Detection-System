@@ -1,6 +1,7 @@
 from flask import Flask, render_template, request
 import pickle
 import os
+from urllib.parse import urlparse
 
 app = Flask(__name__)
 
@@ -19,22 +20,43 @@ except Exception as e:
 
 
 # =========================
-# CLASSIFIER (SMART VERSION)
+# CLASSIFIER (PRO VERSION)
 # =========================
 def classify_url(url):
     url = url.strip().lower()
 
-    # ❌ 1. INVALID URL CHECK
+    # ❌ 1. INVALID INPUT
     if "." not in url or len(url) < 5:
         return "Phishing"
 
-    # ❌ 2. DOMAIN EXTENSION CHECK
+    # 👉 2. EXTRACT DOMAIN
+    try:
+        parsed = urlparse(url)
+        domain = parsed.netloc if parsed.netloc else parsed.path
+    except:
+        domain = url
+
+    # remove www
+    if domain.startswith("www."):
+        domain = domain[4:]
+
+    # ✅ 3. TRUSTED DOMAINS (SHORT LINKS SAFE)
+    trusted_domains = [
+        "youtu.be", "youtube.com",
+        "google.com", "github.com",
+        "amazon.in", "facebook.com"
+    ]
+
+    if any(td in domain for td in trusted_domains):
+        return "Safe"
+
+    # ❌ 4. EXTENSION CHECK
     valid_ext = [".com", ".in", ".org", ".net", ".co", ".gov", ".edu"]
 
-    if not any(url.endswith(ext) for ext in valid_ext):
+    if not any(domain.endswith(ext) for ext in valid_ext):
         return "Phishing"
 
-    # 🚨 3. SUSPICIOUS PATTERN CHECK
+    # 🚨 5. SUSPICIOUS WORDS (ONLY DOMAIN)
     suspicious_words = [
         "login", "verify", "secure", "bank",
         "account", "update", "password",
@@ -42,10 +64,17 @@ def classify_url(url):
         "free", "money", "offer", "urgent"
     ]
 
-    if any(word in url for word in suspicious_words):
+    if any(word in domain for word in suspicious_words):
         return "Phishing"
 
-    # 🤖 4. ML MODEL CHECK
+    # 🚨 6. EXTRA RULES (ADVANCED)
+    if "-" in domain and any(word in domain for word in ["login", "secure", "bank"]):
+        return "Phishing"
+
+    if domain.count(".") > 3:
+        return "Phishing"
+
+    # 🤖 7. ML MODEL
     if model:
         try:
             pred = model.predict([url])[0]
@@ -53,7 +82,7 @@ def classify_url(url):
         except:
             pass
 
-    # ✅ DEFAULT SAFE
+    # ✅ FINAL SAFE
     return "Safe"
 
 
@@ -101,7 +130,7 @@ def index():
 
 
 # =========================
-# RUN
+# RUN (RENDER READY)
 # =========================
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 10000))
