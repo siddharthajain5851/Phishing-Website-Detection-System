@@ -78,13 +78,13 @@ def classify_url(url):
 # ROUTES
 # =========================
 
-# 🔥 NEW: Splash page route
-@app.route("/index")
+# 🔥 SPLASH SCREEN (LOGO PAGE)
+@app.route("/")
 def splash():
-    return render_template("index.html")   # logo page
+    return render_template("index.html")
 
-# 🔥 MAIN PAGE (scanner UI)
-@app.route("/", methods=["GET", "POST"])
+# 🔥 MAIN SCANNER PAGE
+@app.route("/home", methods=["GET", "POST"])
 def home():
     results = []
     safe = phishing = 0
@@ -98,15 +98,12 @@ def home():
 
             if label == "Safe":
                 safe += 1
-                color = "green"
             else:
                 phishing += 1
-                color = "red"
 
             results.append({
                 "url": url,
-                "label": label,
-                "color": color
+                "label": label
             })
 
         total = len(urls)
@@ -124,5 +121,4 @@ def home():
 
 # =========================
 if __name__ == "__main__":
-    port = int(os.environ.get("PORT", 10000))
-    app.run(host="0.0.0.0", port=port)
+    app.run(debug=True)
