@@ -12,14 +12,19 @@ model = None
 vectorizer = None
 
 # =========================
-# LOAD MODEL
+# SAFE MODEL LOAD 🔥 (CRASH PROOF)
 # =========================
-if os.path.exists(MODEL_PATH) and os.path.exists(VECTORIZER_PATH):
-    model = pickle.load(open(MODEL_PATH, "rb"))
-    vectorizer = pickle.load(open(VECTORIZER_PATH, "rb"))
-    print("✅ ML model loaded")
-else:
-    print("⚠️ Using rule-based detection")
+try:
+    if os.path.exists(MODEL_PATH) and os.path.exists(VECTORIZER_PATH):
+        model = pickle.load(open(MODEL_PATH, "rb"))
+        vectorizer = pickle.load(open(VECTORIZER_PATH, "rb"))
+        print("✅ ML model loaded")
+    else:
+        print("⚠️ Model files not found, using rule-based detection")
+except Exception as e:
+    print("❌ Model load failed:", e)
+    model = None
+    vectorizer = None
 
 # =========================
 # TRUSTED DOMAINS
@@ -28,16 +33,18 @@ trusted_domains = [
     "google.com", "youtube.com", "youtu.be",
     "facebook.com", "instagram.com",
     "amazon.in", "github.com",
-    "linkedin.com", "twitter.com"
+    "linkedin.com", "twitter.com",
+    "wikipedia.org", "microsoft.com",
+    "netflix.com", "stackoverflow.com"
 ]
 
 # =========================
-# VALID URL CHECK 🔥
+# VALID URL CHECK
 # =========================
 def is_valid_url(url):
     regex = re.compile(
-        r'^(https?:\/\/)?'              # http:// or https://
-        r'([\da-z\.-]+)\.([a-z\.]{2,})' # domain
+        r'^(https?:\/\/)?'              
+        r'([\da-z\.-]+)\.([a-z\.]{2,})'
         r'([\/\w\.-]*)*\/?$'
     )
     return re.match(regex, url)
@@ -51,7 +58,7 @@ def clean_url(url):
     return url
 
 # =========================
-# CLASSIFIER 🔥 UPDATED
+# CLASSIFIER
 # =========================
 def classify_url(url):
 
@@ -61,20 +68,22 @@ def classify_url(url):
 
     url = clean_url(url)
 
-    # ✅ TRUSTED
+    # ✅ TRUSTED DOMAINS
     for domain in trusted_domains:
         if domain in url:
             return "Safe"
 
     # 🤖 ML MODEL
     if model and vectorizer:
-        X = vectorizer.transform([url])
-        pred = model.predict(X)[0]
+        try:
+            X = vectorizer.transform([url])
+            pred = model.predict(X)[0]
+            if pred == 1:
+                return "Phishing"
+        except:
+            pass  # fallback to rules
 
-        if pred == 1:
-            return "Phishing"
-
-    # ⚠️ RULE-BASED CHECKS
+    # ⚠️ RULE-BASED DETECTION
     phishing_keywords = [
         "login", "verify", "secure", "bank",
         "update", "password", "account",
@@ -94,10 +103,12 @@ def classify_url(url):
 # ROUTES
 # =========================
 
+# 🔥 ROOT → DIRECT HOME (NO index.html NEEDED)
 @app.route("/")
 def splash():
-    return render_template("index.html")
+    return home()
 
+# 🔥 MAIN PAGE
 @app.route("/home", methods=["GET", "POST"])
 def home():
     results = []
@@ -136,6 +147,8 @@ def home():
 
     return render_template("home.html", results=None, summary=None)
 
+# =========================
+# RUN SERVER (RENDER SAFE)
 # =========================
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 10000))
