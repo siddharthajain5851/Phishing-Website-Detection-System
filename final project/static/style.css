@@ -13,10 +13,10 @@ body {
 }
 
 .header h1 {
-    font-size: 42px;
+    text-align: center;
     color: #00e5ff;
     text-shadow: 0 0 10px #00e5ff;
-    margin: 0;
+    margin-top: 20px;
 }
 
 .header h2 {
@@ -130,11 +130,13 @@ th {
     background: #00e5ff;
     color: black;
     padding: 12px;
+    text-align: center;
 }
 
 td {
     padding: 12px;
     border-bottom: 1px solid #222;
+    text-align: center;
 }
 
 /* BADGE */
