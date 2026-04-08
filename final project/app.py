@@ -32,6 +32,17 @@ trusted_domains = [
 ]
 
 # =========================
+# VALID URL CHECK 🔥
+# =========================
+def is_valid_url(url):
+    regex = re.compile(
+        r'^(https?:\/\/)?'              # http:// or https://
+        r'([\da-z\.-]+)\.([a-z\.]{2,})' # domain
+        r'([\/\w\.-]*)*\/?$'
+    )
+    return re.match(regex, url)
+
+# =========================
 # CLEAN URL
 # =========================
 def clean_url(url):
@@ -40,18 +51,22 @@ def clean_url(url):
     return url
 
 # =========================
-# CLASSIFIER
+# CLASSIFIER 🔥 UPDATED
 # =========================
 def classify_url(url):
+
+    # ❌ INVALID CHECK FIRST
+    if not is_valid_url(url):
+        return "Invalid"
+
     url = clean_url(url)
 
+    # ✅ TRUSTED
     for domain in trusted_domains:
         if domain in url:
             return "Safe"
 
-    if re.match(r"^[a-z]{3,10}$", url):
-        return "Phishing"
-
+    # 🤖 ML MODEL
     if model and vectorizer:
         X = vectorizer.transform([url])
         pred = model.predict(X)[0]
@@ -59,6 +74,7 @@ def classify_url(url):
         if pred == 1:
             return "Phishing"
 
+    # ⚠️ RULE-BASED CHECKS
     phishing_keywords = [
         "login", "verify", "secure", "bank",
         "update", "password", "account",
@@ -78,16 +94,14 @@ def classify_url(url):
 # ROUTES
 # =========================
 
-# 🔥 SPLASH SCREEN (LOGO PAGE)
 @app.route("/")
 def splash():
     return render_template("index.html")
 
-# 🔥 MAIN SCANNER PAGE
 @app.route("/home", methods=["GET", "POST"])
 def home():
     results = []
-    safe = phishing = 0
+    safe = phishing = invalid = 0
 
     if request.method == "POST":
         urls = request.form.get("urls", "").split("\n")
@@ -98,8 +112,10 @@ def home():
 
             if label == "Safe":
                 safe += 1
-            else:
+            elif label == "Phishing":
                 phishing += 1
+            else:
+                invalid += 1
 
             results.append({
                 "url": url,
@@ -112,6 +128,7 @@ def home():
             "total": total,
             "safe": safe,
             "phishing": phishing,
+            "invalid": invalid,
             "risk": round((phishing / max(total, 1)) * 100, 2)
         }
 
