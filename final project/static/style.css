@@ -5,23 +5,42 @@ body {
     color: white;
 }
 
-/* Heading */
-h1 {
+/* HEADER */
+.header {
     text-align: center;
-    color: #00e5ff;
-    text-shadow: 0 0 10px #00e5ff;
-    margin-top: 20px;
+    margin-top: 30px;
+    margin-bottom: 20px;
 }
 
-/* Container */
+.header h1 {
+    font-size: 42px;
+    color: #00e5ff;
+    text-shadow: 0 0 10px #00e5ff;
+    margin: 0;
+}
+
+.header h2 {
+    margin: 5px;
+    font-size: 18px;
+    color: #ccc;
+}
+
+.header p {
+    margin: 5px;
+    font-size: 14px;
+    color: #888;
+}
+
+/* CONTAINER */
 .container {
     width: 90%;
     max-width: 1100px;
     margin: auto;
     padding: 20px;
+    text-align: center;
 }
 
-/* Textarea */
+/* TEXTAREA */
 textarea {
     width: 100%;
     height: 140px;
@@ -31,9 +50,15 @@ textarea {
     background: #111b2e;
     color: white;
     outline: none;
+    text-align: center;
 }
 
-/* Button */
+textarea::placeholder {
+    text-align: center;
+    color: #888;
+}
+
+/* BUTTON */
 button {
     margin-top: 10px;
     padding: 12px 22px;
@@ -50,7 +75,7 @@ button:hover {
     transform: scale(1.05);
 }
 
-/* Cards */
+/* CARDS */
 .cards {
     display: flex;
     gap: 15px;
@@ -71,22 +96,27 @@ button:hover {
     transform: translateY(-5px);
 }
 
-.safe {
+.card.safe {
     background: linear-gradient(135deg, #00c853, #64dd17);
     box-shadow: 0 0 15px #00c853;
 }
 
-.phishing {
+.card.phishing {
     background: linear-gradient(135deg, #d50000, #ff1744);
     box-shadow: 0 0 15px #ff1744;
 }
 
-.risk {
+.card.invalid {
+    background: linear-gradient(135deg, #616161, #9e9e9e);
+    box-shadow: 0 0 15px #9e9e9e;
+}
+
+.card.risk {
     background: linear-gradient(135deg, #ff9100, #ff6d00);
     box-shadow: 0 0 15px #ff9100;
 }
 
-/* Table */
+/* TABLE */
 table {
     width: 100%;
     margin-top: 25px;
@@ -100,7 +130,6 @@ th {
     background: #00e5ff;
     color: black;
     padding: 12px;
-    text-align: left;
 }
 
 td {
@@ -108,7 +137,28 @@ td {
     border-bottom: 1px solid #222;
 }
 
-/* Responsive */
+/* BADGE */
+.badge {
+    padding: 6px 12px;
+    border-radius: 8px;
+    font-weight: bold;
+    font-size: 12px;
+    color: white;
+}
+
+.safe {
+    background-color: #00c853;
+}
+
+.phishing {
+    background-color: #ff1744;
+}
+
+.invalid {
+    background-color: #9e9e9e;
+}
+
+/* RESPONSIVE */
 @media (max-width: 768px) {
     .cards {
         flex-direction: column;
