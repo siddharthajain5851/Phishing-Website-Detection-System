@@ -1,90 +1,85 @@
-from flask import Flask, render_template, request
+ from flask import Flask, render_template, request
 import pickle
 import os
-from urllib.parse import urlparse
+import re
 
 app = Flask(__name__)
+
+MODEL_PATH = "phishing.pkl"
+VECTORIZER_PATH = "vectorizer.pkl"
+
+model = None
+vectorizer = None
 
 # =========================
 # LOAD MODEL
 # =========================
-model = None
-try:
-    if os.path.exists("phishing.pkl"):
-        model = pickle.load(open("phishing.pkl", "rb"))
-        print("✅ ML model loaded")
-    else:
-        print("❌ Model not found")
-except Exception as e:
-    print("❌ Error loading model:", e)
-
+if os.path.exists(MODEL_PATH) and os.path.exists(VECTORIZER_PATH):
+    model = pickle.load(open(MODEL_PATH, "rb"))
+    vectorizer = pickle.load(open(VECTORIZER_PATH, "rb"))
+    print("✅ ML model loaded")
+else:
+    print("⚠️ Using rule-based detection")
 
 # =========================
-# CLASSIFIER (PRO VERSION)
+# TRUSTED DOMAINS (IMPORTANT 🔥)
+# =========================
+trusted_domains = [
+    "google.com", "youtube.com", "youtu.be",
+    "facebook.com", "instagram.com",
+    "amazon.in", "github.com",
+    "linkedin.com", "twitter.com"
+]
+
+# =========================
+# CLEAN URL
+# =========================
+def clean_url(url):
+    url = url.lower().strip()
+    url = re.sub(r"^https?://(www\.)?", "", url)
+    return url
+
+# =========================
+# SMART CLASSIFIER 🔥
 # =========================
 def classify_url(url):
-    url = url.strip().lower()
+    url = clean_url(url)
 
-    # ❌ 1. INVALID INPUT
-    if "." not in url or len(url) < 5:
+    # 1️⃣ TRUSTED DOMAIN CHECK
+    for domain in trusted_domains:
+        if domain in url:
+            return "Safe"
+
+    # 2️⃣ RANDOM STRING CHECK (gyhj type)
+    if re.match(r"^[a-z]{3,10}$", url):
         return "Phishing"
 
-    # 👉 2. EXTRACT DOMAIN
-    try:
-        parsed = urlparse(url)
-        domain = parsed.netloc if parsed.netloc else parsed.path
-    except:
-        domain = url
+    # 3️⃣ ML MODEL
+    if model and vectorizer:
+        X = vectorizer.transform([url])
+        pred = model.predict(X)[0]
 
-    # remove www
-    if domain.startswith("www."):
-        domain = domain[4:]
+        # ML says phishing → confirm
+        if pred == 1:
+            return "Phishing"
 
-    # ✅ 3. TRUSTED DOMAINS (SHORT LINKS SAFE)
-    trusted_domains = [
-        "youtu.be", "youtube.com",
-        "google.com", "github.com",
-        "amazon.in", "facebook.com"
-    ]
-
-    if any(td in domain for td in trusted_domains):
-        return "Safe"
-
-    # ❌ 4. EXTENSION CHECK
-    valid_ext = [".com", ".in", ".org", ".net", ".co", ".gov", ".edu"]
-
-    if not any(domain.endswith(ext) for ext in valid_ext):
-        return "Phishing"
-
-    # 🚨 5. SUSPICIOUS WORDS (ONLY DOMAIN)
-    suspicious_words = [
+    # 4️⃣ STRONG PHISHING KEYWORDS
+    phishing_keywords = [
         "login", "verify", "secure", "bank",
-        "account", "update", "password",
-        "signin", "paypal", "apple", "facebook",
-        "free", "money", "offer", "urgent"
+        "update", "password", "account",
+        "signin", "confirm", "urgent",
+        "free", "bonus", "win", "click"
     ]
 
-    if any(word in domain for word in suspicious_words):
+    if any(word in url for word in phishing_keywords):
         return "Phishing"
 
-    # 🚨 6. EXTRA RULES (ADVANCED)
-    if "-" in domain and any(word in domain for word in ["login", "secure", "bank"]):
+    # 5️⃣ SUSPICIOUS PATTERNS
+    if "-" in url or url.count(".") > 2:
         return "Phishing"
 
-    if domain.count(".") > 3:
-        return "Phishing"
-
-    # 🤖 7. ML MODEL
-    if model:
-        try:
-            pred = model.predict([url])[0]
-            return "Phishing" if pred == 1 else "Safe"
-        except:
-            pass
-
-    # ✅ FINAL SAFE
+    # 6️⃣ DEFAULT SAFE
     return "Safe"
-
 
 # =========================
 # ROUTE
@@ -92,8 +87,7 @@ def classify_url(url):
 @app.route("/", methods=["GET", "POST"])
 def index():
     results = []
-    safe = 0
-    phishing = 0
+    safe = phishing = 0
 
     if request.method == "POST":
         urls = request.form.get("urls", "").split("\n")
@@ -128,9 +122,7 @@ def index():
 
     return render_template("index.html", results=None, summary=None)
 
-
 # =========================
-# RUN (RENDER READY)
 # =========================
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 10000))
