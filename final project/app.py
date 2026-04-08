@@ -22,7 +22,7 @@ else:
     print("⚠️ Using rule-based detection")
 
 # =========================
-# TRUSTED DOMAINS (IMPORTANT 🔥)
+# TRUSTED DOMAINS
 # =========================
 trusted_domains = [
     "google.com", "youtube.com", "youtu.be",
@@ -40,30 +40,25 @@ def clean_url(url):
     return url
 
 # =========================
-# SMART CLASSIFIER 🔥
+# CLASSIFIER
 # =========================
 def classify_url(url):
     url = clean_url(url)
 
-    # 1️⃣ TRUSTED DOMAIN CHECK
     for domain in trusted_domains:
         if domain in url:
             return "Safe"
 
-    # 2️⃣ RANDOM STRING CHECK (gyhj type)
     if re.match(r"^[a-z]{3,10}$", url):
         return "Phishing"
 
-    # 3️⃣ ML MODEL
     if model and vectorizer:
         X = vectorizer.transform([url])
         pred = model.predict(X)[0]
 
-        # ML says phishing → confirm
         if pred == 1:
             return "Phishing"
 
-    # 4️⃣ STRONG PHISHING KEYWORDS
     phishing_keywords = [
         "login", "verify", "secure", "bank",
         "update", "password", "account",
@@ -74,18 +69,23 @@ def classify_url(url):
     if any(word in url for word in phishing_keywords):
         return "Phishing"
 
-    # 5️⃣ SUSPICIOUS PATTERNS
     if "-" in url or url.count(".") > 2:
         return "Phishing"
 
-    # 6️⃣ DEFAULT SAFE
     return "Safe"
 
 # =========================
-# ROUTE
+# ROUTES
 # =========================
+
+# 🔥 NEW: Splash page route
+@app.route("/index")
+def splash():
+    return render_template("index.html")   # logo page
+
+# 🔥 MAIN PAGE (scanner UI)
 @app.route("/", methods=["GET", "POST"])
-def index():
+def home():
     results = []
     safe = phishing = 0
 
@@ -118,11 +118,10 @@ def index():
             "risk": round((phishing / max(total, 1)) * 100, 2)
         }
 
-        return render_template("index.html", results=results, summary=summary)
+        return render_template("home.html", results=results, summary=summary)
 
-    return render_template("index.html", results=None, summary=None)
+    return render_template("home.html", results=None, summary=None)
 
-# =========================
 # =========================
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 10000))
