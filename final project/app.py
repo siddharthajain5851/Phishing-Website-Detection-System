@@ -12,42 +12,29 @@ model = None
 vectorizer = None
 
 # =========================
-# SAFE MODEL LOAD 🔥 (CRASH PROOF)
+# LOAD MODEL SAFELY
 # =========================
 try:
-    if os.path.exists(MODEL_PATH) and os.path.exists(VECTORIZER_PATH):
-        model = pickle.load(open(MODEL_PATH, "rb"))
-        vectorizer = pickle.load(open(VECTORIZER_PATH, "rb"))
-        print("✅ ML model loaded")
-    else:
-        print("⚠️ Model files not found, using rule-based detection")
+    with open(MODEL_PATH, "rb") as f:
+        model = pickle.load(f)
+    with open(VECTORIZER_PATH, "rb") as f:
+        vectorizer = pickle.load(f)
+    print("✅ ML model loaded")
 except Exception as e:
-    print("❌ Model load failed:", e)
+    print("⚠️ ML model not loaded:", e)
     model = None
     vectorizer = None
+
 
 # =========================
 # TRUSTED DOMAINS
 # =========================
 trusted_domains = [
-    "google.com", "youtube.com", "youtu.be",
-    "facebook.com", "instagram.com",
-    "amazon.in", "github.com",
-    "linkedin.com", "twitter.com",
-    "wikipedia.org", "microsoft.com",
-    "netflix.com", "stackoverflow.com"
+    "google.com", "youtube.com", "facebook.com",
+    "instagram.com", "amazon.in", "github.com",
+    "linkedin.com", "twitter.com", "paypal.com"
 ]
 
-# =========================
-# VALID URL CHECK
-# =========================
-def is_valid_url(url):
-    regex = re.compile(
-        r'^(https?:\/\/)?'              
-        r'([\da-z\.-]+)\.([a-z\.]{2,})'
-        r'([\/\w\.-]*)*\/?$'
-    )
-    return re.match(regex, url)
 
 # =========================
 # CLEAN URL
@@ -57,33 +44,34 @@ def clean_url(url):
     url = re.sub(r"^https?://(www\.)?", "", url)
     return url
 
+
 # =========================
-# CLASSIFIER
+# VALID URL CHECK
+# =========================
+def is_valid_url(url):
+    return "." in url and len(url) > 5
+
+
+# =========================
+# CLASSIFIER ENGINE
 # =========================
 def classify_url(url):
 
-    # ❌ INVALID CHECK FIRST
+    url = clean_url(url)
+
     if not is_valid_url(url):
         return "Invalid"
 
-    url = clean_url(url)
-
-    # ✅ TRUSTED DOMAINS
+    # SAFE DOMAIN CHECK (STRICT)
     for domain in trusted_domains:
-        if domain in url:
+        if url == domain or url.endswith("." + domain):
             return "Safe"
 
-    # 🤖 ML MODEL
-    if model and vectorizer:
-        try:
-            X = vectorizer.transform([url])
-            pred = model.predict(X)[0]
-            if pred == 1:
-                return "Phishing"
-        except:
-            pass  # fallback to rules
+    # LOOKALIKE ATTACKS
+    if re.search(r"(paypa1|paypai|g00gle|faceb00k|amazan)", url):
+        return "Phishing"
 
-    # ⚠️ RULE-BASED DETECTION
+    # KEYWORDS
     phishing_keywords = [
         "login", "verify", "secure", "bank",
         "update", "password", "account",
@@ -94,25 +82,46 @@ def classify_url(url):
     if any(word in url for word in phishing_keywords):
         return "Phishing"
 
-    if "-" in url or url.count(".") > 2:
+    # STRUCTURE CHECK
+    if "-" in url or url.count(".") > 3:
         return "Phishing"
 
+    # ML MODEL
+    if model and vectorizer:
+        try:
+            X = vectorizer.transform([url])
+            if model.predict(X)[0] == 1:
+                return "Phishing"
+        except:
+            pass
+
     return "Safe"
+
 
 # =========================
 # ROUTES
 # =========================
 
-# 🔥 ROOT → DIRECT HOME (NO index.html NEEDED)
 @app.route("/")
-def splash():
-    return home()
+def index():
+    return render_template("index.html")
 
-# 🔥 MAIN PAGE
+
 @app.route("/home", methods=["GET", "POST"])
 def home():
     results = []
-    safe = phishing = invalid = 0
+
+    safe = 0
+    phishing = 0
+    invalid = 0
+
+    summary = {
+        "total": 0,
+        "safe": 0,
+        "phishing": 0,
+        "invalid": 0,
+        "risk": 0
+    }
 
     if request.method == "POST":
         urls = request.form.get("urls", "").split("\n")
@@ -133,7 +142,7 @@ def home():
                 "label": label
             })
 
-        total = len(urls)
+        total = len(results)
 
         summary = {
             "total": total,
@@ -143,12 +152,9 @@ def home():
             "risk": round((phishing / max(total, 1)) * 100, 2)
         }
 
-        return render_template("home.html", results=results, summary=summary)
+    return render_template("home.html", results=results, summary=summary)
 
-    return render_template("home.html", results=None, summary=None)
 
-# =========================
-# RUN SERVER (RENDER SAFE)
 # =========================
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 10000))
