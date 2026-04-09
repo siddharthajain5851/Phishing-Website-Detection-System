@@ -1,39 +1,99 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Meghix Trinetra - Cloud Defense AI</title>
-    <link rel="stylesheet" href="/static/style.css">
+    <title>Meghix Trinetra</title>
+
+    <style>
+        body { font-family: Arial; }
+
+        .container {
+            width: 80%;
+            margin: auto;
+        }
+
+        textarea {
+            width: 100%;
+            height: 120px;
+            padding: 10px;
+        }
+
+        button {
+            padding: 10px 20px;
+            background: black;
+            color: white;
+            border: none;
+        }
+
+        .cards {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        .card {
+            flex: 1;
+            padding: 15px;
+            color: white;
+            text-align: center;
+            border-radius: 10px;
+        }
+
+        .safe { background: green; }
+        .phishing { background: red; }
+        .risk { background: orange; }
+
+        table {
+            width: 100%;
+            margin-top: 20px;
+            border-collapse: collapse;
+        }
+
+        th, td {
+            border: 1px solid #ddd;
+            padding: 10px;
+        }
+
+        .badge {
+            padding: 5px 10px;
+            border-radius: 6px;
+            color: white;
+        }
+
+        .safe { background: green; }
+        .phishing { background: red; }
+        .invalid { background: gray; }
+
+        .header {
+            text-align: center;
+            margin: 20px 0;
+        }
+    </style>
 </head>
 
 <body>
 
 <div class="header">
-    <h1>🧿 MEGHIX TRINETRA</h1>
-    <h2>Cloud Defense AI</h2>
-    <p>The Third Eye of Cybersecurity</p>
+    <h1>🧿 Meghix Trinetra</h1>
+    <p>Cloud Defense AI - The Third Eye of Cyber Security</p>
 </div>
 
 <div class="container">
 
 <form method="POST">
     <textarea name="urls" placeholder="Enter URLs (one per line)"></textarea>
-    <br>
+    <br><br>
     <button type="submit">Scan URLs</button>
 </form>
 
 {% if summary %}
-
 <div class="cards">
     <div class="card safe">Safe: {{ summary.safe }}</div>
     <div class="card phishing">Phishing: {{ summary.phishing }}</div>
-    <div class="card invalid">Invalid: {{ summary.invalid }}</div>
     <div class="card risk">Risk: {{ summary.risk }}%</div>
 </div>
-
 {% endif %}
 
 {% if results %}
-
 <table>
     <tr>
         <th>URL</th>
@@ -44,18 +104,13 @@
     <tr>
         <td>{{ item.url }}</td>
         <td>
-            <span class="badge 
-                {{ 'safe' if item.label == 'Safe' 
-                else 'phishing' if item.label == 'Phishing' 
-                else 'invalid' }}">
+            <span class="badge {{ item.label|lower }}">
                 {{ item.label }}
             </span>
         </td>
     </tr>
     {% endfor %}
-
 </table>
-
 {% endif %}
 
 </div>
