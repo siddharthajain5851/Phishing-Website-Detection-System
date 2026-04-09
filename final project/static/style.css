@@ -1,7 +1,8 @@
+/* BODY */
 body {
     margin: 0;
     font-family: Arial, sans-serif;
-    background: #0b1220;
+    background: linear-gradient(135deg, #0b1220, #000000);
     color: white;
 }
 
@@ -13,20 +14,12 @@ body {
 }
 
 .header h1 {
-    text-align: center;
     color: #00e5ff;
     text-shadow: 0 0 10px #00e5ff;
     margin-top: 20px;
 }
 
-.header h2 {
-    margin: 5px;
-    font-size: 18px;
-    color: #ccc;
-}
-
 .header p {
-    margin: 5px;
     font-size: 14px;
     color: #888;
 }
@@ -50,12 +43,6 @@ textarea {
     background: #111b2e;
     color: white;
     outline: none;
-    text-align: center;
-}
-
-textarea::placeholder {
-    text-align: center;
-    color: #888;
 }
 
 /* BUTTON */
@@ -67,7 +54,6 @@ button {
     border-radius: 8px;
     font-weight: bold;
     cursor: pointer;
-    transition: 0.3s;
 }
 
 button:hover {
@@ -88,32 +74,18 @@ button:hover {
     border-radius: 12px;
     text-align: center;
     font-weight: bold;
-    font-size: 16px;
-    transition: 0.3s;
-}
-
-.card:hover {
-    transform: translateY(-5px);
 }
 
 .card.safe {
     background: linear-gradient(135deg, #00c853, #64dd17);
-    box-shadow: 0 0 15px #00c853;
 }
 
 .card.phishing {
     background: linear-gradient(135deg, #d50000, #ff1744);
-    box-shadow: 0 0 15px #ff1744;
-}
-
-.card.invalid {
-    background: linear-gradient(135deg, #616161, #9e9e9e);
-    box-shadow: 0 0 15px #9e9e9e;
 }
 
 .card.risk {
     background: linear-gradient(135deg, #ff9100, #ff6d00);
-    box-shadow: 0 0 15px #ff9100;
 }
 
 /* TABLE */
@@ -130,13 +102,11 @@ th {
     background: #00e5ff;
     color: black;
     padding: 12px;
-    text-align: center;
 }
 
 td {
     padding: 12px;
     border-bottom: 1px solid #222;
-    text-align: center;
 }
 
 /* BADGE */
@@ -144,8 +114,6 @@ td {
     padding: 6px 12px;
     border-radius: 8px;
     font-weight: bold;
-    font-size: 12px;
-    color: white;
 }
 
 .safe {
@@ -154,10 +122,6 @@ td {
 
 .phishing {
     background-color: #ff1744;
-}
-
-.invalid {
-    background-color: #9e9e9e;
 }
 
 /* RESPONSIVE */
