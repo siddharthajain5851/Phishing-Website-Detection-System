@@ -1,27 +1,25 @@
-from flask import Flask, render_template, request
+from flask import Flask, render_template, request, redirect
 import pickle
 import os
 import re
+import numpy as np
+from urllib.parse import urlparse
 
 app = Flask(__name__)
 
 MODEL_PATH = "phishing.pkl"
 VECTORIZER_PATH = "vectorizer.pkl"
-
-model = None
-vectorizer = None
+USER_FILE = "users.txt"
 
 # =========================
-# LOAD MODEL SAFELY
+# LOAD MODEL + VECTORIZER
 # =========================
 try:
-    with open(MODEL_PATH, "rb") as f:
-        model = pickle.load(f)
-    with open(VECTORIZER_PATH, "rb") as f:
-        vectorizer = pickle.load(f)
-    print("✅ ML model loaded")
+    model = pickle.load(open(MODEL_PATH, "rb"))
+    vectorizer = pickle.load(open(VECTORIZER_PATH, "rb"))
+    print("✅ Model & Vectorizer loaded")
 except Exception as e:
-    print("⚠️ ML model not loaded:", e)
+    print("❌ Error loading model:", e)
     model = None
     vectorizer = None
 
@@ -31,69 +29,91 @@ except Exception as e:
 # =========================
 trusted_domains = [
     "google.com", "youtube.com", "facebook.com",
-    "instagram.com", "amazon.in", "github.com",
-    "linkedin.com", "twitter.com", "paypal.com"
+    "instagram.com", "amazon.in", "amazon.com",
+    "github.com", "linkedin.com", "twitter.com",
+    "paypal.com", "flipkart.com", "paytm.com"
 ]
 
 
 # =========================
-# CLEAN URL
+# CLEAN DOMAIN
 # =========================
-def clean_url(url):
-    url = url.lower().strip()
-    url = re.sub(r"^https?://(www\.)?", "", url)
-    return url
+def clean_domain(url):
+    url = url.strip().lower()
+
+    if not url.startswith("http"):
+        url = "http://" + url
+
+    parsed = urlparse(url)
+    domain = parsed.netloc
+
+    if domain.startswith("www."):
+        domain = domain[4:]
+
+    return domain
 
 
 # =========================
-# VALID URL CHECK
+# FEATURE ENGINEERING
 # =========================
-def is_valid_url(url):
-    return "." in url and len(url) > 5
+def extract_features(url):
+    url = str(url).lower()
+
+    return [
+        len(url),
+        url.count("."),
+        url.count("-"),
+        url.count("@"),
+        int("https" in url),
+        int(any(word in url for word in [
+            "login","verify","secure","bank",
+            "account","update","password",
+            "free","win","bonus"
+        ])),
+        int(url.endswith((".xyz",".tk",".ml"))),
+        int(url.count(".") > 3),
+    ]
 
 
 # =========================
-# CLASSIFIER ENGINE
+# CLASSIFIER
 # =========================
 def classify_url(url):
 
-    url = clean_url(url)
+    domain = clean_domain(url)
 
-    if not is_valid_url(url):
+    if "." not in domain:
         return "Invalid"
 
-    # SAFE DOMAIN CHECK (STRICT)
-    for domain in trusted_domains:
-        if url == domain or url.endswith("." + domain):
+    # ✅ Trusted domains (strict match)
+    for d in trusted_domains:
+        if domain == d or domain.endswith("." + d):
             return "Safe"
 
-    # LOOKALIKE ATTACKS
-    if re.search(r"(paypa1|paypai|g00gle|faceb00k|amazan)", url):
+    # 🚨 Lookalike attacks
+    if re.search(r"(paypa1|g00gle|faceb00k|amaz0n)", domain):
         return "Phishing"
 
-    # KEYWORDS
-    phishing_keywords = [
-        "login", "verify", "secure", "bank",
-        "update", "password", "account",
-        "signin", "confirm", "urgent",
-        "free", "bonus", "win", "click"
-    ]
-
-    if any(word in url for word in phishing_keywords):
+    # 🚨 Brand phishing
+    if ("paypal" in domain or "amazon" in domain or "google" in domain) and \
+       any(word in domain for word in ["login","secure","verify","account"]):
         return "Phishing"
 
-    # STRUCTURE CHECK
-    if "-" in url or url.count(".") > 3:
+    # 🚨 Suspicious structure
+    if domain.count(".") > 4:
         return "Phishing"
 
-    # ML MODEL
+    # 🤖 ML prediction
     if model and vectorizer:
         try:
-            X = vectorizer.transform([url])
-            if model.predict(X)[0] == 1:
-                return "Phishing"
-        except:
-            pass
+            num_feat = np.array([extract_features(url)])
+            text_feat = vectorizer.transform([url]).toarray()
+            X = np.hstack((num_feat, text_feat))
+
+            pred = model.predict(X)[0]
+            return "Phishing" if pred == 1 else "Safe"
+        except Exception as e:
+            print("ML error:", e)
 
     return "Safe"
 
@@ -102,18 +122,94 @@ def classify_url(url):
 # ROUTES
 # =========================
 
+# LOGO PAGE
 @app.route("/")
 def index():
     return render_template("index.html")
 
 
+# LOGIN
+@app.route("/login", methods=["GET", "POST"])
+def login():
+    error = None
+
+    if request.method == "POST":
+        user = request.form.get("username", "").strip()
+        pwd = request.form.get("password", "").strip()
+
+        if os.path.exists(USER_FILE):
+            with open(USER_FILE) as f:
+                for line in f:
+                    parts = line.strip().split(",")
+
+                    if len(parts) != 2:
+                        continue
+
+                    u, p = parts
+                    if user == u and pwd == p:
+                        return redirect("/dashboard")
+
+        error = "Invalid Username or Password"
+
+    return render_template("login.html", error=error)
+
+
+# REGISTER (FIXED)
+@app.route("/register", methods=["GET", "POST"])
+def register():
+    error = None
+
+    if request.method == "POST":
+
+        user = request.form.get("username")
+        pwd = request.form.get("password")
+        confirm = request.form.get("confirm_password")
+
+        # Empty check
+        if not user or not pwd or not confirm:
+            error = "All fields are required"
+
+        else:
+            user = user.strip()
+            pwd = pwd.strip()
+            confirm = confirm.strip()
+
+            # Password match
+            if pwd != confirm:
+                error = "Passwords do not match"
+
+            else:
+                # Duplicate user check
+                if os.path.exists(USER_FILE):
+                    with open(USER_FILE) as f:
+                        for line in f:
+                            parts = line.strip().split(",")
+                            if len(parts) != 2:
+                                continue
+                            if user == parts[0]:
+                                error = "Username already exists"
+                                return render_template("register.html", error=error)
+
+                # Save user
+                with open(USER_FILE, "a") as f:
+                    f.write(f"{user},{pwd}\n")
+
+                return redirect("/dashboard")
+
+    return render_template("register.html", error=error)
+
+
+# DASHBOARD
+@app.route("/dashboard")
+def dashboard():
+    return render_template("dashboard.html")
+
+
+# PHISHING TOOL
 @app.route("/home", methods=["GET", "POST"])
 def home():
-    results = []
 
-    safe = 0
-    phishing = 0
-    invalid = 0
+    results = []
 
     summary = {
         "total": 0,
@@ -126,6 +222,8 @@ def home():
     if request.method == "POST":
         urls = request.form.get("urls", "").split("\n")
         urls = [u.strip() for u in urls if u.strip()]
+
+        safe = phishing = invalid = 0
 
         for url in urls:
             label = classify_url(url)
@@ -158,4 +256,4 @@ def home():
 # =========================
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 10000))
-    app.run(host="0.0.0.0", port=port)
+    app.run(host="0.0.0.0", port=port, debug=True)
