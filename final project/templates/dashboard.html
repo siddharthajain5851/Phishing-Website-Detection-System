@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Trinetra Dashboard</title>
+
+<!-- ICONS -->
+<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
+
+<style>
+body{
+    margin:0;
+    font-family: 'Segoe UI';
+    background:#050b18;
+    color:white;
+    overflow:hidden;
+}
+
+/* ================= SIDEBAR ================= */
+.sidebar{
+    width:250px;
+    height:100vh;
+    position:fixed;
+    left:0;
+    top:0;
+    background:rgba(10,15,30,0.98);
+    border-right:1px solid rgba(0,255,255,0.2);
+    transition:0.4s;
+    z-index:10;
+}
+
+/* MINI SIDEBAR (ICON ONLY) */
+.sidebar.mini{
+    width:75px;
+}
+
+/* LOGO */
+.logo{
+    text-align:center;
+    padding:20px 10px;
+}
+
+.logo h2{
+    color:#00eaff;
+    margin:5px 0;
+    font-size:18px;
+}
+
+.sidebar.mini .logo h2,
+.sidebar.mini .logo small{
+    display:none;
+}
+
+/* MENU */
+.menu a{
+    display:flex;
+    align-items:center;
+    gap:12px;
+    padding:12px 18px;
+    color:#ccc;
+    text-decoration:none;
+    margin:6px 10px;
+    border-radius:10px;
+    transition:0.3s;
+    font-size:15px;
+}
+
+.menu a i{
+    min-width:20px;
+    text-align:center;
+}
+
+/* HOVER EFFECT */
+.menu a:hover{
+    background:rgba(0,255,255,0.15);
+    color:#00eaff;
+    transform:translateX(5px);
+}
+
+/* ACTIVE LINK */
+.menu a.active{
+    background:rgba(0,255,255,0.2);
+    color:#00eaff;
+    box-shadow:0 0 10px #00eaff40;
+}
+
+/* TEXT HIDE IN MINI */
+.sidebar.mini .menu a span{
+    display:none;
+}
+
+/* ================= MAIN ================= */
+.main{
+    margin-left:250px;
+    padding:20px;
+    transition:0.4s;
+}
+
+.main.full{
+    margin-left:75px;
+}
+
+/* TOP BAR */
+.top{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+}
+
+.menu-btn{
+    font-size:22px;
+    cursor:pointer;
+}
+
+/* TITLE */
+.title{
+    text-align:center;
+    margin-top:10px;
+}
+
+.title h1{
+    color:#00eaff;
+}
+
+/* ================= TOOLS ================= */
+.tools{
+    display:flex;
+    justify-content:center;
+    gap:25px;
+    margin-top:40px;
+}
+
+/* CARD BASE */
+.card{
+    width:300px;
+    height:420px;
+    border-radius:20px;
+    padding:20px;
+    text-align:center;
+    display:flex;
+    flex-direction:column;
+    justify-content:space-between;
+    backdrop-filter: blur(10px);
+    transition:0.3s;
+}
+
+/* HOVER CARD */
+.card:hover{
+    transform:translateY(-10px) scale(1.02);
+}
+
+/* COLORS */
+.card1{
+    border:1px solid #00eaff;
+    box-shadow:0 0 20px #00eaff40;
+}
+.card2{
+    border:1px solid #a855f7;
+    box-shadow:0 0 20px #a855f740;
+}
+.card3{
+    border:1px solid #3b82f6;
+    box-shadow:0 0 20px #3b82f640;
+}
+
+/* ICON */
+.icon{
+    font-size:55px;
+    margin-top:20px;
+}
+
+/* TITLE */
+.card h2{
+    margin:10px 0;
+}
+
+/* DESC */
+.desc{
+    font-size:14px;
+    color:#aaa;
+    padding:0 10px;
+}
+
+/* BUTTON */
+.btn{
+    margin-bottom:20px;
+    padding:12px;
+    border:none;
+    border-radius:10px;
+    cursor:pointer;
+    font-weight:bold;
+    transition:0.3s;
+}
+
+.btn1{background:#00eaff;color:black;}
+.btn2{background:#a855f7;color:white;}
+.btn3{background:#3b82f6;color:white;}
+
+.btn:hover{
+    transform:scale(1.05);
+    opacity:0.9;
+}
+
+</style>
+</head>
+
+<body>
+
+<!-- SIDEBAR -->
+<div class="sidebar" id="sidebar">
+    <div class="logo">
+        <h2>🧿 Meghix Trinetra</h2>
+        <small>Cloud Defense AI</small>
+    </div>
+
+    <div class="menu">
+        <a href="#" class="active"><i class="fas fa-home"></i><span>Dashboard</span></a>
+        <a href="/home"><i class="fas fa-globe"></i><span>Phishing Tool</span></a>
+        <a href="#"><i class="fas fa-clock"></i><span>History</span></a>
+        <a href="#"><i class="fas fa-user"></i><span>Profile</span></a>
+        <a href="#"><i class="fas fa-database"></i><span>Database</span></a>
+        <a href="#"><i class="fas fa-cog"></i><span>Settings</span></a>
+        <a href="#"><i class="fas fa-sign-out-alt"></i><span>Logout</span></a>
+    </div>
+</div>
+
+<!-- MAIN -->
+<div class="main" id="main">
+
+    <div class="top">
+        <span class="menu-btn" onclick="toggle()">☰</span>
+        <div>Welcome, User</div>
+    </div>
+
+    <div class="title">
+        <h1>TRINETRA DASHBOARD</h1>
+        <p>AI Powered Cyber Security Suite</p>
+    </div>
+
+    <!-- TOOLS -->
+    <div class="tools">
+
+        <!-- TOOL 1 -->
+        <div class="card card1">
+            <div>
+                <div class="icon">🔍</div>
+                <h2>PHISHING URL SCANNER</h2>
+                <p class="desc">
+                    Detect malicious and phishing URLs using AI & ML models.
+                </p>
+            </div>
+
+            <button class="btn btn1" onclick="location.href='/home'">
+                OPEN TOOL →
+            </button>
+        </div>
+
+        <!-- TOOL 2 -->
+        <div class="card card2">
+            <div>
+                <div class="icon">🔒</div>
+                <h2>TOOL 2</h2>
+                <p class="desc">
+                    Advanced security tool coming soon
+                </p>
+            </div>
+
+            <button class="btn btn2">COMING SOON</button>
+        </div>
+
+        <!-- TOOL 3 -->
+        <div class="card card3">
+            <div>
+                <div class="icon">🛡</div>
+                <h2>TOOL 3</h2>
+                <p class="desc">
+                    Advanced security tool coming soon
+                </p>
+            </div>
+
+            <button class="btn btn3">COMING SOON</button>
+        </div>
+
+    </div>
+
+</div>
+
+<script>
+function toggle(){
+    document.getElementById("sidebar").classList.toggle("mini");
+    document.getElementById("main").classList.toggle("full");
+}
+</script>
+
+</body>
+</html>
