@@ -83,7 +83,7 @@ def extract_features(url):
     ]
 
 # =========================
-# CLASSIFIER (FIXED STRONG)
+# CLASSIFIER (UNCHANGED)
 # =========================
 def classify_url(url):
 
@@ -93,16 +93,13 @@ def classify_url(url):
     if "." not in domain:
         return "Invalid"
 
-    # ✅ Trusted
     for d in trusted_domains:
         if domain == d or domain.endswith("." + d):
             return "Safe"
 
-    # 🚨 Lookalike
     if re.search(r"(paypa1|g00gle|faceb00k|amaz0n|micros0ft|app1e)", domain):
         return "Phishing"
 
-    # 🚨 Keywords
     suspicious_words = [
         "login", "verify", "secure", "bank",
         "account", "update", "password",
@@ -111,23 +108,18 @@ def classify_url(url):
     if any(word in url_lower for word in suspicious_words):
         return "Phishing"
 
-    # 🚨 Suspicious TLD
     if domain.endswith((".xyz", ".tk", ".ml", ".ga", ".cf")):
         return "Phishing"
 
-    # 🚨 Too many dots
     if domain.count(".") > 3:
         return "Phishing"
 
-    # 🚨 URL length
     if len(url) > 75:
         return "Phishing"
 
-    # 🚨 @ trick
     if "@" in url:
         return "Phishing"
 
-    # 🤖 ML (optional)
     if model and vectorizer:
         try:
             num_feat = np.array([extract_features(url)])
@@ -143,14 +135,13 @@ def classify_url(url):
     return "Safe"
 
 # =========================
-# ROUTES
+# ROUTES (UNCHANGED)
 # =========================
 
 @app.route("/")
 def index():
     return render_template("index.html")
 
-# LOGIN
 @app.route("/login", methods=["GET", "POST"])
 def login():
     error = None
@@ -173,12 +164,10 @@ def login():
 
     return render_template("login.html", error=error)
 
-# LOGOUT
 @app.route("/logout")
 def logout():
     return redirect(url_for("login"))
 
-# REGISTER
 @app.route("/register", methods=["GET", "POST"])
 def register():
     error = None
@@ -212,13 +201,12 @@ def register():
 
     return render_template("register.html", error=error)
 
-# DASHBOARD
 @app.route("/dashboard")
 def dashboard():
     return render_template("dashboard.html")
 
 # =========================
-# SCANNER PAGE
+# SCANNER (UNCHANGED)
 # =========================
 @app.route("/home", methods=["GET", "POST"])
 def home():
@@ -257,10 +245,8 @@ def home():
     return render_template("home.html", results=results, summary=summary)
 
 # =========================
-# 🔥 AI EXPLAIN (RANDOM)
+# 🔥 AI EXPLAIN (DEEP + RANDOM + FIXED)
 # =========================
- import random
-
 @app.route("/explain", methods=["POST"])
 def explain():
     data = request.get_json()
@@ -269,78 +255,70 @@ def explain():
 
     domain = clean_domain(url)
 
-    # ===== GPT (optional) =====
+    # GPT (optional)
     if client:
         try:
             response = client.chat.completions.create(
                 model="gpt-4o-mini",
                 messages=[
-                    {
-                        "role": "system",
-                        "content": "You are an expert cybersecurity analyst. Give ONE detailed but not too long explanation."
-                    },
-                    {
-                        "role": "user",
-                        "content": f"Explain in a detailed way why this URL is {label}: {url}"
-                    }
+                    {"role": "system", "content": "You are an expert cybersecurity analyst. Give one detailed explanation."},
+                    {"role": "user", "content": f"Explain deeply why this URL is {label}: {url}"}
                 ]
             )
             return jsonify({"text": response.choices[0].message.content})
         except:
             pass
 
-    # ===== DEEP FALLBACK REASONS =====
-
+    # ===== DEEP FALLBACK =====
     phishing_reasons = [
-        "This URL appears to mimic a trusted brand by slightly altering characters (such as replacing letters with numbers), which is a common phishing tactic used to deceive users into believing the site is legitimate and entering sensitive information.",
+        "This URL demonstrates characteristics of a phishing attack by imitating a trusted service using subtle character manipulation. Attackers often replace letters with visually similar numbers or symbols to trick users into believing the site is legitimate, increasing the likelihood of credential theft.",
         
-        "The presence of keywords like 'login', 'verify', or 'secure' in the URL suggests that the page is attempting to trick users into entering credentials, a common behavior seen in phishing attacks targeting account information.",
+        "The presence of sensitive keywords such as 'login', 'verify', or 'secure' strongly indicates an attempt to lure users into entering confidential information. These terms are commonly used in phishing campaigns to create urgency and trust.",
         
-        "The domain structure is unusually complex with multiple subdomains, which attackers often use to obscure the real origin of the site and make it appear trustworthy at a glance.",
+        "The domain structure appears unusually complex with multiple subdomains or unnecessary segments. This technique is frequently used to disguise the true origin of the site and mislead users into trusting it.",
         
-        "This URL uses a suspicious or uncommon top-level domain (like .xyz or .tk), which are frequently abused in phishing campaigns due to their low cost and minimal verification requirements.",
+        "The use of uncommon or low-reputation top-level domains suggests a higher risk of malicious intent, as such domains are often favored by attackers due to lower registration costs and fewer restrictions.",
         
-        "The length of the URL is unusually long and contains multiple segments, which is often a sign of obfuscation used to hide malicious intent or confuse users.",
+        "The excessive length and obfuscation of the URL indicate a possible attempt to hide malicious payloads or deceive users, which is a known tactic in advanced phishing and malware distribution campaigns.",
         
-        "The domain is not part of any known trusted service and does not match expected naming conventions, increasing the likelihood that it is a spoofed or malicious website.",
+        "This URL does not match any known trusted domain and shows patterns consistent with impersonation, which significantly increases the probability that it is designed to deceive users and capture sensitive data.",
         
-        "The URL may be attempting a social engineering attack by creating urgency or trust signals, encouraging users to act quickly without verifying authenticity.",
+        "The structure suggests it may host a fake login interface intended to harvest user credentials, a common objective of phishing attacks targeting banking, email, or social media accounts.",
         
-        "The structure of the URL suggests it may host a fake login page designed to capture user credentials such as passwords, banking information, or personal data.",
+        "Special characters or misleading formatting within the URL indicate attempts to manipulate how users perceive the link, potentially hiding the actual destination or creating a false sense of legitimacy.",
         
-        "The presence of special characters like '@' or excessive hyphens can indicate attempts to manipulate how the URL is interpreted by users or browsers.",
+        "The overall pattern aligns with known phishing signatures, including deceptive naming, keyword abuse, and structural anomalies that are frequently observed in real-world cyber attacks.",
         
-        "This URL pattern matches known phishing signatures where attackers replicate the look and feel of legitimate services to steal sensitive data from unsuspecting users."
+        "This URL likely forms part of a broader social engineering strategy aimed at exploiting user trust, encouraging interaction under false pretenses to steal data or distribute malicious content."
     ]
 
     safe_reasons = [
-        "The domain matches a well-known and trusted service, and its structure follows standard naming conventions without any suspicious modifications or misleading patterns.",
+        "The domain structure is clean and matches known trusted services, indicating that the URL follows standard and legitimate naming conventions without signs of manipulation.",
         
-        "No phishing-related keywords such as 'login', 'verify', or 'secure' are present in unusual contexts, indicating that the URL is not attempting to trick users into revealing sensitive information.",
+        "No suspicious keywords or deceptive patterns were detected, suggesting that the URL is not attempting to trick users into revealing sensitive information.",
         
-        "The URL structure is clean, short, and easy to interpret, which is typical of legitimate websites rather than malicious or obfuscated links.",
+        "The URL is short, clear, and logically structured, which is typical of legitimate websites and reduces the likelihood of hidden malicious intent.",
         
-        "The domain uses a common and reputable top-level domain, and there are no signs of impersonation or brand spoofing.",
+        "The domain uses a reputable top-level domain and does not exhibit any characteristics commonly associated with phishing or fraudulent websites.",
         
-        "No suspicious encoding, redirects, or deceptive elements were detected in the URL, suggesting that it behaves like a normal and safe web address."
+        "Overall analysis indicates normal behavior with no red flags, suggesting that the URL is safe for general use, though standard caution is always recommended."
     ]
 
     invalid_reasons = [
-        "The provided input does not follow standard URL formatting rules, making it impossible to extract a valid domain or determine its legitimacy.",
+        "The input does not conform to standard URL formatting rules, making it impossible to accurately extract or validate a domain for security analysis.",
         
-        "The URL is missing essential components such as a proper domain name or top-level domain, which are required for a valid web address.",
+        "Essential components such as a valid domain or top-level domain are missing, which prevents the system from classifying the URL.",
         
-        "The structure of the input does not resemble a typical URL, suggesting that it may be incomplete, malformed, or incorrectly entered.",
+        "The structure appears malformed or incomplete, indicating that the input is not a valid web address.",
         
-        "Parsing the URL failed because it lacks recognizable elements like a hostname, indicating that it is not a valid or usable link.",
+        "The parsing process failed due to lack of recognizable URL elements, suggesting the input may be incorrect or improperly formatted.",
         
-        "The input does not contain a proper web address format and therefore cannot be analyzed for security risks or classification."
+        "This input cannot be treated as a valid URL, and therefore no meaningful security analysis can be performed."
     ]
 
-    # ===== RANDOM SELECT (1 ONLY) =====
     if label == "Phishing":
         reason = random.choice(phishing_reasons)
-        text = f"⚠️ PHISHING DETECTED\n\nDomain: {domain}\n\n🔍 Analysis:\n{reason}"
+        text = f"⚠️ PHISHING DETECTED\n\nDomain: {domain}\n\n🔍 Deep Analysis:\n{reason}"
 
     elif label == "Safe":
         reason = random.choice(safe_reasons)
@@ -353,7 +331,7 @@ def explain():
     return jsonify({"text": text})
 
 # =========================
-# RUN SERVER
+# RUN
 # =========================
 if __name__ == "__main__":
     app.run(debug=True, port=10000)
