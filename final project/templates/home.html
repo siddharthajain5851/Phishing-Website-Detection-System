@@ -15,15 +15,30 @@ body{
     color:white;
 }
 
-/* BACKGROUND */
-canvas{
+/* NEON BACKGROUND GLOW */
+body::before{
+    content:"";
     position:fixed;
-    top:0;
-    left:0;
+    width:600px;
+    height:600px;
+    background:radial-gradient(circle,#00eaff55,transparent 70%);
+    top:-100px;
+    left:-100px;
     z-index:0;
 }
 
-/* SIDEBAR (DEFAULT CLOSED) */
+body::after{
+    content:"";
+    position:fixed;
+    width:500px;
+    height:500px;
+    background:radial-gradient(circle,#00ffb355,transparent 70%);
+    bottom:-100px;
+    right:-100px;
+    z-index:0;
+}
+
+/* SIDEBAR */
 .sidebar{
     width:75px;
     height:100vh;
@@ -36,24 +51,17 @@ canvas{
     z-index:10;
 }
 
-/* OPEN STATE */
-.sidebar.open{
-    width:250px;
-}
+.sidebar.open{ width:250px; }
 
 .logo{
     text-align:center;
     padding:20px;
 }
 
-.logo h2, .logo small{
-    display:none;
-}
+.logo h2, .logo small{ display:none; }
 
 .sidebar.open .logo h2,
-.sidebar.open .logo small{
-    display:block;
-}
+.sidebar.open .logo small{ display:block; }
 
 /* MENU */
 .menu a{
@@ -65,11 +73,13 @@ canvas{
     text-decoration:none;
     margin:6px 10px;
     border-radius:10px;
+    transition:0.3s;
 }
 
 .menu a:hover{
     background:rgba(0,255,255,0.15);
     color:#00eaff;
+    box-shadow:0 0 10px #00eaff;
 }
 
 .menu a.active{
@@ -77,23 +87,15 @@ canvas{
     color:#00eaff;
 }
 
-.menu a span{
-    display:none;
-}
-
-.sidebar.open .menu a span{
-    display:inline;
-}
+.menu a span{ display:none; }
+.sidebar.open .menu a span{ display:inline; }
 
 /* MAIN */
 .main{
     margin-left:75px;
     transition:0.4s;
 }
-
-.main.open{
-    margin-left:250px;
-}
+.main.open{ margin-left:250px; }
 
 /* MENU BTN */
 .menu-btn{
@@ -121,7 +123,6 @@ canvas{
     text-align:center;
     transition:0.3s;
 }
-
 .card.shift{ left:40%; }
 
 /* FORM */
@@ -142,8 +143,11 @@ button{
     border:none;
     border-radius:12px;
     background:linear-gradient(90deg,#00eaff,#00ffb3);
-    font-weight:bold;
+    box-shadow:0 0 15px #00eaff;
     cursor:pointer;
+}
+button:hover{
+    box-shadow:0 0 25px #00eaff;
 }
 
 /* STATS */
@@ -156,13 +160,23 @@ button{
 .stat{
     flex:1;
     padding:12px;
-    border-radius:10px;
+    border-radius:12px;
     font-weight:bold;
+    border:1px solid rgba(0,255,255,0.3);
 }
 
-.safe{background:green;}
-.phishing{background:red;}
-.risk{background:orange;}
+.safe{
+    background:rgba(0,255,100,0.2);
+    box-shadow:0 0 15px #00ff88;
+}
+.phishing{
+    background:rgba(255,0,0,0.2);
+    box-shadow:0 0 15px red;
+}
+.risk{
+    background:rgba(255,150,0,0.2);
+    box-shadow:0 0 15px orange;
+}
 
 .small-link{
     font-size:11px;
@@ -190,9 +204,15 @@ th,td{
     border-radius:8px;
 }
 
-.badge.safe{background:green;}
-.badge.phishing{background:red;}
-.badge.invalid{background:gray;}
+.badge.safe{
+    background:#00ff88;
+    box-shadow:0 0 10px #00ff88;
+}
+.badge.phishing{
+    background:red;
+    box-shadow:0 0 10px red;
+}
+.badge.invalid{ background:gray; }
 
 .why-btn{
     margin-left:8px;
@@ -217,7 +237,6 @@ th,td{
     padding:20px;
     z-index:30;
 }
-
 .popup.show{ transform:translateX(0); }
 
 .close{
@@ -229,8 +248,6 @@ th,td{
 </head>
 
 <body>
-
-<canvas id="bg"></canvas>
 
 <!-- SIDEBAR -->
 <div class="sidebar" id="sidebar">
@@ -254,7 +271,6 @@ th,td{
 
 <!-- MAIN -->
 <div class="main" id="main">
-
 <div class="card" id="card">
 
 <h2>🧿 MEGHIX TRINETRA</h2>
@@ -265,6 +281,20 @@ th,td{
 <button type="submit">SCAN ➤</button>
 </form>
 
+<!-- ✅ SUMMARY BACK -->
+{% if summary.total > 0 %}
+<div class="cards">
+    <div class="stat safe">Safe: {{ summary.safe }}</div>
+
+    <div class="stat phishing">
+        Phishing: {{ summary.phishing }}
+        <span class="small-link" onclick="explain('summary','Phishing')">See Why</span>
+    </div>
+
+    <div class="stat risk">Risk: {{ summary.risk }}%</div>
+</div>
+{% endif %}
+
 {% if results %}
 <table>
 <tr><th>URL</th><th>Status</th></tr>
@@ -274,12 +304,7 @@ th,td{
 <td>{{ item.url }}</td>
 <td>
 <span class="badge {{ item.label|lower }}">{{ item.label }}</span>
-
-<button class="why-btn"
-onclick="explain('{{item.url}}','{{item.label}}')">
-See Why
-</button>
-
+<button class="why-btn" onclick="explain('{{item.url}}','{{item.label}}')">See Why</button>
 </td>
 </tr>
 {% endfor %}
