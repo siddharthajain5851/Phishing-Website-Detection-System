@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Meghix Trinetra</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600&display=swap" rel="stylesheet">
+<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
+
+<style>
+body{
+    margin:0;
+    font-family:'Orbitron',sans-serif;
+    background:#020617;
+    overflow:hidden;
+    color:white;
+}
+
+/* BACKGROUND */
+canvas{
+    position:fixed;
+    top:0;
+    left:0;
+    z-index:0;
+}
+
+/* SIDEBAR (DEFAULT CLOSED) */
+.sidebar{
+    width:75px;
+    height:100vh;
+    position:fixed;
+    left:0;
+    top:0;
+    background:rgba(10,15,30,0.98);
+    border-right:1px solid rgba(0,255,255,0.2);
+    transition:0.4s;
+    z-index:10;
+}
+
+/* OPEN STATE */
+.sidebar.open{
+    width:250px;
+}
+
+.logo{
+    text-align:center;
+    padding:20px;
+}
+
+.logo h2, .logo small{
+    display:none;
+}
+
+.sidebar.open .logo h2,
+.sidebar.open .logo small{
+    display:block;
+}
+
+/* MENU */
+.menu a{
+    display:flex;
+    align-items:center;
+    gap:12px;
+    padding:12px 18px;
+    color:#ccc;
+    text-decoration:none;
+    margin:6px 10px;
+    border-radius:10px;
+}
+
+.menu a:hover{
+    background:rgba(0,255,255,0.15);
+    color:#00eaff;
+}
+
+.menu a.active{
+    background:rgba(0,255,255,0.2);
+    color:#00eaff;
+}
+
+.menu a span{
+    display:none;
+}
+
+.sidebar.open .menu a span{
+    display:inline;
+}
+
+/* MAIN */
+.main{
+    margin-left:75px;
+    transition:0.4s;
+}
+
+.main.open{
+    margin-left:250px;
+}
+
+/* MENU BTN */
+.menu-btn{
+    position:fixed;
+    top:15px;
+    left:20px;
+    font-size:22px;
+    cursor:pointer;
+    z-index:20;
+}
+
+/* CARD */
+.card{
+    position:absolute;
+    top:50%;
+    left:50%;
+    transform:translate(-50%,-50%);
+    width:720px;
+    padding:30px;
+    border-radius:20px;
+    background:rgba(10,20,40,0.7);
+    backdrop-filter:blur(20px);
+    border:1px solid rgba(0,255,255,0.3);
+    box-shadow:0 0 30px rgba(0,255,255,0.3);
+    text-align:center;
+    transition:0.3s;
+}
+
+.card.shift{ left:40%; }
+
+/* FORM */
+textarea{
+    width:100%;
+    height:120px;
+    padding:12px;
+    border-radius:10px;
+    border:1px solid cyan;
+    background:transparent;
+    color:white;
+}
+
+button{
+    width:100%;
+    padding:14px;
+    margin-top:15px;
+    border:none;
+    border-radius:12px;
+    background:linear-gradient(90deg,#00eaff,#00ffb3);
+    font-weight:bold;
+    cursor:pointer;
+}
+
+/* STATS */
+.cards{
+    display:flex;
+    gap:10px;
+    margin-top:20px;
+}
+
+.stat{
+    flex:1;
+    padding:12px;
+    border-radius:10px;
+    font-weight:bold;
+}
+
+.safe{background:green;}
+.phishing{background:red;}
+.risk{background:orange;}
+
+.small-link{
+    font-size:11px;
+    cursor:pointer;
+    text-decoration:underline;
+}
+
+/* TABLE */
+table{
+    width:100%;
+    margin-top:20px;
+    border-collapse:collapse;
+    display:block;
+    max-height:230px;
+    overflow-y:auto;
+}
+
+th,td{
+    border:1px solid #333;
+    padding:10px;
+}
+
+.badge{
+    padding:5px 10px;
+    border-radius:8px;
+}
+
+.badge.safe{background:green;}
+.badge.phishing{background:red;}
+.badge.invalid{background:gray;}
+
+.why-btn{
+    margin-left:8px;
+    padding:4px 8px;
+    border:none;
+    border-radius:6px;
+    background:#00eaff;
+    cursor:pointer;
+}
+
+/* POPUP */
+.popup{
+    position:fixed;
+    top:0;
+    right:0;
+    width:400px;
+    height:100%;
+    background:#020617;
+    border-left:2px solid cyan;
+    transform:translateX(100%);
+    transition:0.3s;
+    padding:20px;
+    z-index:30;
+}
+
+.popup.show{ transform:translateX(0); }
+
+.close{
+    float:right;
+    cursor:pointer;
+    font-size:18px;
+}
+</style>
+</head>
+
+<body>
+
+<canvas id="bg"></canvas>
+
+<!-- SIDEBAR -->
+<div class="sidebar" id="sidebar">
+    <div class="logo">
+        <h2>🧿 Meghix Trinetra</h2>
+        <small>Cloud Defense AI</small>
+    </div>
+
+    <div class="menu">
+        <a href="/dashboard"><i class="fas fa-home"></i><span>Dashboard</span></a>
+        <a href="/home" class="active"><i class="fas fa-globe"></i><span>Phishing Tool</span></a>
+        <a href="#"><i class="fas fa-clock"></i><span>History</span></a>
+        <a href="#"><i class="fas fa-user"></i><span>Profile</span></a>
+        <a href="#"><i class="fas fa-database"></i><span>Database</span></a>
+        <a href="#"><i class="fas fa-cog"></i><span>Settings</span></a>
+        <a href="/logout"><i class="fas fa-sign-out-alt"></i><span>Logout</span></a>
+    </div>
+</div>
+
+<div class="menu-btn" onclick="toggle()">☰</div>
+
+<!-- MAIN -->
+<div class="main" id="main">
+
+<div class="card" id="card">
+
+<h2>🧿 MEGHIX TRINETRA</h2>
+<p style="color:#00eaff;">URL PHISHING DETECTION SYSTEM</p>
+
+<form method="POST">
+<textarea name="urls" placeholder="Enter URLs (one per line)"></textarea>
+<button type="submit">SCAN ➤</button>
+</form>
+
+{% if results %}
+<table>
+<tr><th>URL</th><th>Status</th></tr>
+
+{% for item in results %}
+<tr>
+<td>{{ item.url }}</td>
+<td>
+<span class="badge {{ item.label|lower }}">{{ item.label }}</span>
+
+<button class="why-btn"
+onclick="explain('{{item.url}}','{{item.label}}')">
+See Why
+</button>
+
+</td>
+</tr>
+{% endfor %}
+</table>
+{% endif %}
+
+</div>
+</div>
+
+<!-- POPUP -->
+<div class="popup" id="popup">
+<span class="close" onclick="closePopup()">✖</span>
+<h3 style="color:#00eaff;">AI Analysis</h3>
+<p id="aiText">Analyzing...</p>
+</div>
+
+<script>
+function toggle(){
+    document.getElementById("sidebar").classList.toggle("open");
+    document.getElementById("main").classList.toggle("open");
+}
+
+function explain(url,label){
+document.getElementById("aiText").innerText="Analyzing...";
+
+fetch("/explain",{
+method:"POST",
+headers:{"Content-Type":"application/json"},
+body:JSON.stringify({url:url,label:label})
+})
+.then(r=>r.json())
+.then(d=>{
+document.getElementById("popup").classList.add("show");
+document.getElementById("card").classList.add("shift");
+document.getElementById("aiText").innerText=d.text;
+})
+}
+
+function closePopup(){
+document.getElementById("popup").classList.remove("show");
+document.getElementById("card").classList.remove("shift");
+}
+</script>
+
+</body>
+</html>
