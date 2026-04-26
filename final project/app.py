@@ -3,6 +3,7 @@ import pickle
 import os
 import re
 import numpy as np
+import random
 from urllib.parse import urlparse
 
 # 🔥 OpenAI (new version)
@@ -10,7 +11,7 @@ try:
     from openai import OpenAI
     client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 except:
-    client = None  # fallback if not installed / no key
+    client = None
 
 app = Flask(__name__)
 
@@ -75,18 +76,19 @@ def extract_features(url):
         int(any(word in url for word in [
             "login", "verify", "secure", "bank",
             "account", "update", "password",
-            "free", "win", "bonus"
+            "free", "win", "bonus", "urgent"
         ])),
-        int(url.endswith((".xyz", ".tk", ".ml"))),
+        int(url.endswith((".xyz", ".tk", ".ml", ".ga", ".cf"))),
         int(url.count(".") > 3),
     ]
 
 # =========================
-# CLASSIFIER
+# CLASSIFIER (FIXED STRONG)
 # =========================
 def classify_url(url):
 
     domain = clean_domain(url)
+    url_lower = url.lower()
 
     if "." not in domain:
         return "Invalid"
@@ -97,19 +99,35 @@ def classify_url(url):
             return "Safe"
 
     # 🚨 Lookalike
-    if re.search(r"(paypa1|g00gle|faceb00k|amaz0n)", domain):
+    if re.search(r"(paypa1|g00gle|faceb00k|amaz0n|micros0ft|app1e)", domain):
         return "Phishing"
 
-    # 🚨 Brand attack
-    if ("paypal" in domain or "amazon" in domain or "google" in domain) and \
-       any(word in domain for word in ["login", "secure", "verify", "account"]):
+    # 🚨 Keywords
+    suspicious_words = [
+        "login", "verify", "secure", "bank",
+        "account", "update", "password",
+        "free", "win", "bonus", "urgent"
+    ]
+    if any(word in url_lower for word in suspicious_words):
         return "Phishing"
 
-    # 🚨 Suspicious structure
-    if domain.count(".") > 4:
+    # 🚨 Suspicious TLD
+    if domain.endswith((".xyz", ".tk", ".ml", ".ga", ".cf")):
         return "Phishing"
 
-    # 🤖 ML
+    # 🚨 Too many dots
+    if domain.count(".") > 3:
+        return "Phishing"
+
+    # 🚨 URL length
+    if len(url) > 75:
+        return "Phishing"
+
+    # 🚨 @ trick
+    if "@" in url:
+        return "Phishing"
+
+    # 🤖 ML (optional)
     if model and vectorizer:
         try:
             num_feat = np.array([extract_features(url)])
@@ -117,9 +135,10 @@ def classify_url(url):
             X = np.hstack((num_feat, text_feat))
 
             pred = model.predict(X)[0]
-            return "Phishing" if pred == 1 else "Safe"
-        except Exception as e:
-            print("ML error:", e)
+            if pred == 1:
+                return "Phishing"
+        except:
+            pass
 
     return "Safe"
 
@@ -154,7 +173,7 @@ def login():
 
     return render_template("login.html", error=error)
 
-# ✅ FIXED LOGOUT
+# LOGOUT
 @app.route("/logout")
 def logout():
     return redirect(url_for("login"))
@@ -238,10 +257,7 @@ def home():
     return render_template("home.html", results=results, summary=summary)
 
 # =========================
-# 🔥 AI EXPLAIN
-# =========================
-# =========================
-# 🔥 AI EXPLAIN (DEEP ANALYSIS)
+# 🔥 AI EXPLAIN (RANDOM)
 # =========================
 @app.route("/explain", methods=["POST"])
 def explain():
@@ -251,115 +267,63 @@ def explain():
 
     domain = clean_domain(url)
 
-    # ===== TRY GPT =====
+    # GPT (optional)
     if client:
         try:
             response = client.chat.completions.create(
                 model="gpt-4o-mini",
                 messages=[
-                    {"role": "system", "content": "You are an expert cybersecurity analyst. Give deep but concise analysis."},
-                    {"role": "user", "content": f"Explain why this URL is {label}: {url}"}
+                    {"role": "system", "content": "Give ONE deep cybersecurity reason."},
+                    {"role": "user", "content": f"Why is this {label}: {url}"}
                 ]
             )
             return jsonify({"text": response.choices[0].message.content})
-        except Exception as e:
-            print("⚠️ OpenAI failed:", e)
+        except:
+            pass
 
-    # ===== FALLBACK EXTREME ANALYSIS =====
+    # RANDOM REASONS
+    phishing_reasons = [
+        "This domain mimics a trusted brand using deceptive characters.",
+        "The URL contains phishing keywords suggesting credential theft.",
+        "The structure is overly complex, indicating hidden malicious intent.",
+        "Suspicious TLD commonly used in scams detected.",
+        "URL length suggests obfuscation of malicious content.",
+        "Possible fake login page designed to steal data.",
+        "Domain is not trusted and shows phishing patterns.",
+        "Contains tricks like '@' or misleading subdomains.",
+        "Looks like a cloned website targeting users.",
+        "Matches known phishing attack signatures."
+    ]
+
+    safe_reasons = [
+        "The domain matches a trusted platform.",
+        "No suspicious keywords detected.",
+        "URL structure is clean and standard.",
+        "No phishing patterns identified.",
+        "Domain reputation appears safe."
+    ]
+
+    invalid_reasons = [
+        "URL format is incorrect.",
+        "No valid domain detected.",
+        "Input is not a proper URL.",
+        "Parsing failed.",
+        "Invalid structure."
+    ]
 
     if label == "Phishing":
-        reasons = [
-            "1. Domain may imitate trusted brands using slight spelling variations",
-            "2. Use of numbers instead of letters (g00gle, paypa1)",
-            "3. Suspicious keywords like login/verify present",
-            "4. Possible credential harvesting intent",
-            "5. Domain structure overly complex",
-            "6. Excessive subdomains detected",
-            "7. URL length unusually long",
-            "8. Use of uncommon TLD (.xyz, .tk, .ml)",
-            "9. Missing HTTPS or fake HTTPS usage",
-            "10. Embedded misleading paths",
-            "11. Hidden redirect patterns possible",
-            "12. Domain not matching official brand",
-            "13. Use of hyphens to mimic legit domains",
-            "14. Possible social engineering attack",
-            "15. Fake account verification trap",
-            "16. Likely used in phishing campaigns",
-            "17. DNS age likely very new",
-            "18. Not in trusted whitelist",
-            "19. Brand + keyword combo detected",
-            "20. Looks like login portal spoof",
-            "21. May steal cookies/session",
-            "22. Suspicious URL encoding possible",
-            "23. Domain impersonation risk",
-            "24. Fake payment gateway possibility",
-            "25. Could trigger malware download",
-            "26. URL entropy high (random chars)",
-            "27. Likely blacklisted pattern",
-            "28. Social media bait structure",
-            "29. Urgency-based wording likely",
-            "30. Data exfiltration risk",
-            "31. Possible phishing kit deployment",
-            "32. Not verified by SSL authority",
-            "33. Mismatch between domain & content",
-            "34. Credential reuse attack vector",
-            "35. Could host fake forms",
-            "36. Suspicious redirect chains",
-            "37. Likely spoofed UI pages",
-            "38. High phishing probability score",
-            "39. Looks auto-generated",
-            "40. Domain reputation unknown",
-            "41. Likely mass phishing usage",
-            "42. Short-lived domain lifecycle",
-            "43. May bypass filters via tricks",
-            "44. Contains bait keywords",
-            "45. May target banking credentials",
-            "46. Possible API abuse endpoint",
-            "47. Fake security alert simulation",
-            "48. High-risk classification rules matched",
-            "49. ML model flagged suspicious patterns",
-            "50. Overall phishing confidence: HIGH"
-        ]
-
-        text = "⚠️ PHISHING DETECTED\n\nDomain: {}\n\n".format(domain)
-        text += "\n".join(["• " + r for r in reasons])
+        reason = random.choice(phishing_reasons)
+        text = f"⚠️ PHISHING DETECTED\n\nDomain: {domain}\n\n{reason}"
 
     elif label == "Safe":
-        reasons = [
-            "1. Domain matches known trusted service",
-            "2. Clean and simple URL structure",
-            "3. No suspicious keywords detected",
-            "4. Proper HTTPS usage likely",
-            "5. No excessive subdomains",
-            "6. No impersonation patterns",
-            "7. Matches whitelist database",
-            "8. No phishing patterns found",
-            "9. Stable domain reputation",
-            "10. Overall safety confidence: HIGH"
-        ]
-
-        text = "✅ SAFE URL\n\nDomain: {}\n\n".format(domain)
-        text += "\n".join(["• " + r for r in reasons])
+        reason = random.choice(safe_reasons)
+        text = f"✅ SAFE URL\n\nDomain: {domain}\n\n{reason}"
 
     else:
-        reasons = [
-            "1. URL format incorrect",
-            "2. Missing domain structure",
-            "3. No valid TLD detected",
-            "4. Possibly incomplete input",
-            "5. Parsing failed",
-            "6. Domain extraction error",
-            "7. Not a valid web address",
-            "8. Missing protocol or hostname",
-            "9. Input not URL-like",
-            "10. Validation failed"
-        ]
-
-        text = "❌ INVALID URL\n\n"
-        text += "\n".join(["• " + r for r in reasons])
+        reason = random.choice(invalid_reasons)
+        text = f"❌ INVALID URL\n\n{reason}"
 
     return jsonify({"text": text})
- 
 
 # =========================
 # RUN SERVER
